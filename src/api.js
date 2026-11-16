@@ -19,7 +19,7 @@ function buildCookieString() {
 }
 
 // Common request headers matching a real browser session
-function buildHeaders(referer) {
+function buildHeaders(referer, extraHeaders = {}) {
   return {
     'Accept': 'application/json, text/plain, */*',
     'Accept-Encoding': 'gzip, deflate, br',
@@ -35,6 +35,7 @@ function buildHeaders(referer) {
     'x-rpc-app_version': '2.34.1',
     'x-rpc-client_type': '4',
     'x-rpc-platform': '4',
+    ...extraHeaders
   };
 }
 
@@ -54,7 +55,7 @@ const RETCODES = {
 async function getCheckInStatus(game) {
   const url = `${game.infoUrl}?lang=en-us&act_id=${game.act_id}`;
   const response = await axios.get(url, {
-    headers: buildHeaders(game.referer),
+    headers: buildHeaders(game.referer, game.extraHeaders),
     timeout: 15000,
   });
 
@@ -76,11 +77,11 @@ async function getCheckInStatus(game) {
  * @returns {object} { success: bool, alreadyCheckedIn: bool, message: string }
  */
 async function performCheckIn(game) {
-  const url = `${game.signUrl}?lang=en-us`;
+  const url = `${game.signUrl}?lang=en-us&act_id=${game.act_id}`;
   const body = { act_id: game.act_id };
 
   const response = await axios.post(url, body, {
-    headers: buildHeaders(game.referer),
+    headers: buildHeaders(game.referer, game.extraHeaders),
     timeout: 15000,
   });
 
@@ -109,7 +110,7 @@ async function getTodayReward(game, dayIndex) {
   try {
     const url = `${game.rewardUrl}?lang=en-us&act_id=${game.act_id}`;
     const response = await axios.get(url, {
-      headers: buildHeaders(game.referer),
+      headers: buildHeaders(game.referer, game.extraHeaders),
       timeout: 10000,
     });
 
@@ -119,7 +120,7 @@ async function getTodayReward(game, dayIndex) {
     const award = data.awards[dayIndex];
     return award || null;
   } catch {
-    return null; // Non-critical, don't fail check-in over this
+    return null;
   }
 }
 

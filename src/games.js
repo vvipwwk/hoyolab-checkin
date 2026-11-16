@@ -32,11 +32,14 @@ const GAMES = {
     short: 'ZZZ',
     enabled: process.env.ENABLE_ZZZ !== 'false',
     act_id: 'e202406031448091',
-    signUrl: 'https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/sign',
-    infoUrl: 'https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/info',
-    rewardUrl: 'https://sg-act-nap-api.hoyolab.com/event/luna/zzz/os/home',
-    referer: 'https://act.hoyolab.com/bbs/event/signin/zzz/e202406031448091.html',
+    signUrl: 'https://sg-public-api.hoyolab.com/event/luna/zzz/os/sign',
+    infoUrl: 'https://sg-public-api.hoyolab.com/event/luna/zzz/os/info',
+    rewardUrl: 'https://sg-public-api.hoyolab.com/event/luna/zzz/os/home',
+    referer: 'https://act.hoyolab.com/bbs/event/signin/zzz/e202406031448091.html?act_id=e202406031448091',
     icon: '📺',
+    extraHeaders: {
+      'x-rpc-signgame': 'zzz'
+    }
   },
 
   honkai3rd: {
