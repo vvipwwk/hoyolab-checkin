@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 HoyoLab Auto Check-in Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #141c2e;
+      --card-border: #232f48;
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.25);
+      --text: #f3f4f6;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.2);
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.12) 0px, transparent 50%);
+      background-attachment: fixed;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem;
+      width: 100%;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(99, 102, 241, 0.12);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    /* Navigation Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--card-bg);
+      padding: 0.4rem;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      margin-bottom: 2rem;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      flex: 1;
+      min-width: 130px;
+      padding: 0.75rem 1rem;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    /* Sections */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    /* Status Banner */
+    .status-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      border-radius: 14px;
+      margin-bottom: 1.5rem;
+    }
+
+    .status-banner.connected {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+    }
+
+    .status-banner.unconfigured {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+    }
+
+    .status-icon {
+      font-size: 1.5rem;
+    }
+
+    /* Game Grid */
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .game-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .game-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .game-emoji {
+      font-size: 2rem;
+      background: rgba(255, 255, 255, 0.05);
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+    }
+
+    .game-info h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+
+    .game-status {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .game-status.active { color: var(--success); }
+    .game-status.inactive { color: var(--text-muted); }
+
+    /* Button */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      background: #4f46e5;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-copy {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.75rem;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border-radius: 8px;
+    }
+
+    .btn-copy:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Steps guide */
+    .step-item {
+      display: flex;
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .step-number {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .step-body h4 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+    }
+
+    .step-body p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* Table for Variables */
+    .var-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .var-table th, .var-table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+      font-size: 0.85rem;
+    }
+
+    .var-table th {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .var-name {
+      font-family: monospace;
+      color: #818cf8;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Result Box */
+    .results-box {
+      margin-top: 1.5rem;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 12px;
+      padding: 1.25rem;
+      border: 1px solid var(--card-border);
+      display: none;
+    }
+
+    .log-entry {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.88rem;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="badge-pill">
+        <i class="fa-solid fa-cloud-bolt"></i> Cloud Serverless Service
+      </div>
+      <h1>HoyoLab Auto Check-in</h1>
+      <p class="subtitle">Automatic rewards every day at 00:00 midnight — no PC running needed.</p>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('dashboard')">
+        <i class="fa-solid fa-house"></i> Dashboard
+      </button>
+      <button class="tab-btn" onclick="switchTab('cookies')">
+        <i class="fa-solid fa-cookie-bite"></i> 1. Get Cookies
+      </button>
+      <button class="tab-btn" onclick="switchTab('cloud')">
+        <i class="fa-solid fa-sliders"></i> 2. Configure Cloud
+      </button>
+      <button class="tab-btn" onclick="switchTab('test')">
+        <i class="fa-solid fa-play"></i> 3. Test Now
+      </button>
+    </div>
+
+    <!-- TAB 1: DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content active">
+      <div id="status-banner" class="status-banner unconfigured">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <i id="status-icon" class="fa-solid fa-circle-question status-icon"></i>
+          <div>
+            <h4 id="status-title" style="font-weight: 700;">Checking Service Status...</h4>
+            <p id="status-desc" style="font-size: 0.85rem; opacity: 0.85;">Connecting to your cloud endpoint...</p>
+          </div>
+        </div>
+        <button class="btn btn-copy" onclick="checkStatus()">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-gamepad" style="color: var(--accent);"></i> Monitored Games
+        </div>
+        <div class="games-grid" id="games-grid">
+          <!-- Filled dynamically via JS -->
+          <div class="game-card">
+            <div class="game-emoji">⚔️</div>
+            <div class="game-info">
+              <h4>Genshin Impact</h4>
+              <span class="game-status active">● Enabled</span>
+            </div>
+          </div>
+          <div class="game-card">
+            <div class="game-emoji">🚂</div>
+            <div class="game-info">
+              <h4>Honkai: Star Rail</h4>
+              <span class="game-status active">● Enabled</span>
+            </div>
+          </div>
+          <div class="game-card">
+            <div class="game-emoji">📺</div>
+            <div class="game-info">
+              <h4>Zenless Zone Zero</h4>
+              <span class="game-status active">● Enabled</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.02); border-radius: 12px; padding: 1rem; border: 1px dashed var(--card-border); font-size: 0.88rem; color: var(--text-muted);">
+          <i class="fa-solid fa-clock" style="color: #818cf8; margin-right: 0.4rem;"></i>
+          <strong>Schedule:</strong> Runs every night at <strong>00:00 (UTC+8 / Malaysia & Singapore time)</strong>.
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: GET COOKIES -->
+    <div id="tab-cookies" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-key" style="color: #f59e0b;"></i> How to get your HoyoLab Cookies
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          These cookies authenticate your account safely with Hoyoverse. You only need to copy them once!
+        </p>
+
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-body">
+            <h4>Log into HoyoLab in your Web Browser</h4>
+            <p>Open <a href="https://www.hoyolab.com" target="_blank" style="color: #818cf8;">hoyolab.com</a> in Google Chrome, Edge, or Brave, and log into your account.</p>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-body">
+            <h4>Open Developer Tools</h4>
+            <p>Press <kbd style="background: #1e293b; padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid #334155;">F12</kbd> (or right click anywhere &rarr; choose <strong>Inspect</strong>).</p>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-body">
+            <h4>Find Cookies in the Application Tab</h4>
+            <p>Click on the <strong>Application</strong> tab at the top &rarr; expand <strong>Cookies</strong> on the left side &rarr; click on <code>https://www.hoyolab.com</code>.</p>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-number">4</div>
+          <div class="step-body">
+            <h4>Copy these 4 Values:</h4>
+            <table class="var-table">
+              <thead>
+                <tr>
+                  <th>Cookie Name</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="var-name">ltuid_v2</td>
+                  <td>Your HoyoLab Account ID number (e.g. <code>123456789</code>)</td>
+                </tr>
+                <tr>
+                  <td class="var-name">ltoken_v2</td>
+                  <td>Your authentication token (long string starting with <code>v2_...</code>)</td>
+                </tr>
+                <tr>
+                  <td class="var-name">cookie_token_v2</td>
+                  <td>Verification token (long string)</td>
+                </tr>
+                <tr>
+                  <td class="var-name">account_id_v2</td>
+                  <td>Usually matches your <code>ltuid_v2</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="text-align: right; margin-top: 1.5rem;">
+          <button class="btn btn-primary" onclick="switchTab('cloud')">
+            Next: Configure on Vercel <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: CONFIGURE CLOUD -->
+    <div id="tab-cloud" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-cloud-arrow-up" style="color: var(--accent);"></i> Configure Variables on Vercel
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          In your <a href="https://vercel.com/dashboard" target="_blank" style="color: #818cf8;">Vercel Dashboard</a>, go to your project &rarr; <strong>Settings &rarr; Environment Variables</strong>, and add each of these:
+        </p>
+
+        <table class="var-table">
+          <thead>
+            <tr>
+              <th>Variable Key</th>
+              <th>Value</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="var-name">LTUID_V2</td>
+              <td style="color: var(--text-muted);">Paste your <code>ltuid_v2</code> value</td>
+              <td><button class="btn btn-copy" onclick="copyText('LTUID_V2')">Copy Key</button></td>
+            </tr>
+            <tr>
+              <td class="var-name">LTOKEN_V2</td>
+              <td style="color: var(--text-muted);">Paste your <code>ltoken_v2</code> value</td>
+              <td><button class="btn btn-copy" onclick="copyText('LTOKEN_V2')">Copy Key</button></td>
+            </tr>
+            <tr>
+              <td class="var-name">COOKIE_TOKEN_V2</td>
+              <td style="color: var(--text-muted);">Paste your <code>cookie_token_v2</code></td>
+              <td><button class="btn btn-copy" onclick="copyText('COOKIE_TOKEN_V2')">Copy Key</button></td>
+            </tr>
+            <tr>
+              <td class="var-name">ACCOUNT_ID_V2</td>
+              <td style="color: var(--text-muted);">Paste your <code>account_id_v2</code></td>
+              <td><button class="btn btn-copy" onclick="copyText('ACCOUNT_ID_V2')">Copy Key</button></td>
+            </tr>
+            <tr>
+              <td class="var-name">ENABLE_GENSHIN</td>
+              <td style="color: var(--text-muted);"><code>true</code></td>
+              <td><button class="btn btn-copy" onclick="copyText('ENABLE_GENSHIN')">Copy Key</button></td>
+            </tr>
+            <tr>
+              <td class="var-name">ENABLE_STARRAIL</td>
+              <td style="color: var(--text-muted);"><code>true</code></td>
+              <td><button class="btn btn-copy" onclick="copyText('ENABLE_STARRAIL')">Copy Key</button></td>
+            </tr>
+            <tr>
+              <td class="var-name">ENABLE_ZZZ</td>
+              <td style="color: var(--text-muted);"><code>true</code></td>
+              <td><button class="btn btn-copy" onclick="copyText('ENABLE_ZZZ')">Copy Key</button></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top: 1.5rem; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; padding: 1rem; font-size: 0.85rem; color: #a5b4fc;">
+          <i class="fa-solid fa-shield-halved" style="margin-right: 0.4rem;"></i>
+          <strong>Privacy guarantee:</strong> These values are encrypted directly by Vercel. Only your own serverless function can read them.
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: TEST RUN -->
+    <div id="tab-test" class="tab-content">
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-paper-plane" style="color: var(--success);"></i> Test Check-in Now
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          Trigger an instant test run right now to see if your cookies are working and claim today's rewards immediately!
+        </p>
+
+        <button id="run-btn" class="btn btn-primary" onclick="runCheckin()">
+          <i class="fa-solid fa-play"></i> Run Check-in Right Now
+        </button>
+
+        <div id="results-box" class="results-box">
+          <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem;" id="results-title">Execution Result:</h4>
+          <div id="results-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      HoyoLab Auto Check-in &bull; Runs on Vercel Serverless &bull; Genshin Impact, Star Rail & ZZZ
+    </footer>
+  </div>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (targetBtn) targetBtn.classList.add('active');
+      
+      const targetContent = document.getElementById(`tab-${tabId}`);
+      if (targetContent) targetContent.classList.add('active');
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert(`Copied "${text}" to clipboard!`);
+      });
+    }
+
+    async function checkStatus() {
+      const banner = document.getElementById('status-banner');
+      const title = document.getElementById('status-title');
+      const desc = document.getElementById('status-desc');
+      const icon = document.getElementById('status-icon');
+
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+
+        if (data.configured) {
+          banner.className = 'status-banner connected';
+          icon.className = 'fa-solid fa-circle-check status-icon';
+          title.textContent = 'Service is Online & Configured!';
+          desc.textContent = `Cookies detected. Check-in runs daily at 00:00 (${data.timezone}).`;
+        } else {
+          banner.className = 'status-banner unconfigured';
+          icon.className = 'fa-solid fa-triangle-exclamation status-icon';
+          title.textContent = 'Cookies Not Configured Yet';
+          desc.textContent = 'Please follow Tab 1 and 2 to add your HoyoLab cookies in Vercel settings.';
+        }
+      } catch (e) {
+        banner.className = 'status-banner unconfigured';
+        icon.className = 'fa-solid fa-circle-xmark status-icon';
+        title.textContent = 'Ready to Deploy to Vercel';
+        desc.textContent = 'Deploy your project to Vercel to activate cloud auto check-in.';
+      }
+    }
+
+    async function runCheckin() {
+      const btn = document.getElementById('run-btn');
+      const resultsBox = document.getElementById('results-box');
+      const resultsList = document.getElementById('results-list');
+      const resultsTitle = document.getElementById('results-title');
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking in to Hoyoverse...';
+      resultsBox.style.display = 'block';
+      resultsList.innerHTML = '<div style="color: var(--text-muted); font-size: 0.88rem;">Contacting HoyoLab servers... please wait.</div>';
+
+      try {
+        const res = await fetch('/api/checkin');
+        const data = await res.json();
+
+        if (!data.success && data.message) {
+          resultsTitle.textContent = '⚠️ Check-in Notice';
+          resultsList.innerHTML = `<div style="color: #fbbf24; font-size: 0.9rem;">${data.message}</div>`;
+        } else if (data.results) {
+          resultsTitle.textContent = '✅ Check-in Summary:';
+          resultsList.innerHTML = data.results.map(r => `
+            <div class="log-entry">
+              <div>
+                <strong>${r.icon || '🎮'} ${r.game}</strong>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">${r.reward ? 'Reward: ' + r.reward : ''}</div>
+              </div>
+              <div>
+                ${r.alreadyCheckedIn 
+                  ? '<span style="color: #60a5fa; font-weight: 600;">Already Done Today</span>' 
+                  : (r.success ? '<span style="color: #34d399; font-weight: 600;">Success (Day ' + r.totalDays + ')</span>' : '<span style="color: #f87171; font-weight: 600;">Failed: ' + (r.error || '') + '</span>')}
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        resultsTitle.textContent = '❌ Execution Error';
+        resultsList.innerHTML = `<div style="color: #f87171;">Failed to reach /api/checkin. Make sure you deployed to Vercel first!</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-play"></i> Run Check-in Right Now';
+        checkStatus();
+      }
+    }
+
+    // Initial load
+    checkStatus();
+  </script>
+</body>
+</html>
