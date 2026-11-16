@@ -5,6 +5,11 @@
       "schedule": "0 16 * * *"
     }
   ],
+  "functions": {
+    "api/checkin.js": {
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
     {
       "source": "/",

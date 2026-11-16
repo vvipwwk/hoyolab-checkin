@@ -1,17 +1,15 @@
 // ============================================================
-// logger.js - Winston-based logger
+// logger.js - Winston-based logger (Serverless compatible)
 // ============================================================
 require('dotenv').config();
 const { createLogger, format, transports } = require('winston');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure logs directory exists
-const logsDir = path.join(__dirname, '..', 'logs');
-if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
-
 const logLevel = process.env.LOG_LEVEL || 'info';
-const logToFile = process.env.LOG_TO_FILE !== 'false';
+// Never write files on serverless / Vercel
+const isVercel = Boolean(process.env.VERCEL);
+const logToFile = !isVercel && process.env.LOG_TO_FILE !== 'false';
 
 const logFormat = format.combine(
   format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -29,23 +27,30 @@ const loggerTransports = [
 ];
 
 if (logToFile) {
-  loggerTransports.push(
-    new transports.File({
-      filename: path.join(logsDir, 'checkin.log'),
-      format: logFormat,
-      maxsize: 5 * 1024 * 1024, // 5MB
-      maxFiles: 7,
-      tailable: true,
-    }),
-    new transports.File({
-      filename: path.join(logsDir, 'error.log'),
-      level: 'error',
-      format: logFormat,
-      maxsize: 2 * 1024 * 1024,
-      maxFiles: 3,
-      tailable: true,
-    })
-  );
+  try {
+    const logsDir = path.join(__dirname, '..', 'logs');
+    if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+
+    loggerTransports.push(
+      new transports.File({
+        filename: path.join(logsDir, 'checkin.log'),
+        format: logFormat,
+        maxsize: 5 * 1024 * 1024,
+        maxFiles: 7,
+        tailable: true,
+      }),
+      new transports.File({
+        filename: path.join(logsDir, 'error.log'),
+        level: 'error',
+        format: logFormat,
+        maxsize: 2 * 1024 * 1024,
+        maxFiles: 3,
+        tailable: true,
+      })
+    );
+  } catch (err) {
+    console.warn('File logging disabled due to filesystem error:', err.message);
+  }
 }
 
 const logger = createLogger({
