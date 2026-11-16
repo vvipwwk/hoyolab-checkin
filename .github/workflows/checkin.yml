@@ -1,0 +1,83 @@
+name: 🎮 HoyoLab Daily Check-in
+
+on:
+  # ── Scheduled trigger ──────────────────────────────────────────────
+  # GitHub Actions cron uses UTC.
+  # 00:00 MYT (UTC+8) = 16:00 UTC the previous day.
+  # Adjust if your timezone differs:
+  #   SGT (UTC+8):   16:00 UTC  → "0 16 * * *"
+  #   JST (UTC+9):   15:00 UTC  → "0 15 * * *"
+  #   UTC:           00:00 UTC  → "0 0 * * *"
+  schedule:
+    - cron: "0 16 * * *"   # 00:00 MYT / SGT every day
+
+  # ── Manual trigger from the GitHub Actions tab ─────────────────────
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (test cookies & connectivity only, no actual check-in)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  checkin:
+    name: HoyoLab Check-in
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # 1. Checkout the repo
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Node.js
+      - name: 🟩 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # 3. Install dependencies
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      # 4a. Dry-run mode (test only)
+      - name: 🔍 Test connectivity (dry run)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: node src/test.js
+        env:
+          LTUID_V2: ${{ secrets.LTUID_V2 }}
+          LTOKEN_V2: ${{ secrets.LTOKEN_V2 }}
+          COOKIE_TOKEN_V2: ${{ secrets.COOKIE_TOKEN_V2 }}
+          ACCOUNT_ID_V2: ${{ secrets.ACCOUNT_ID_V2 }}
+          ENABLE_GENSHIN: ${{ vars.ENABLE_GENSHIN || 'true' }}
+          ENABLE_STARRAIL: ${{ vars.ENABLE_STARRAIL || 'true' }}
+          ENABLE_ZZZ: ${{ vars.ENABLE_ZZZ || 'true' }}
+          ENABLE_HONKAI3RD: ${{ vars.ENABLE_HONKAI3RD || 'false' }}
+          ENABLE_TOT: ${{ vars.ENABLE_TOT || 'false' }}
+          TIMEZONE: ${{ vars.TIMEZONE || 'Asia/Kuala_Lumpur' }}
+          LOG_TO_FILE: "false"
+
+      # 4b. Normal check-in
+      - name: 🎮 Run daily check-in
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: node src/checkin.js
+        env:
+          LTUID_V2: ${{ secrets.LTUID_V2 }}
+          LTOKEN_V2: ${{ secrets.LTOKEN_V2 }}
+          COOKIE_TOKEN_V2: ${{ secrets.COOKIE_TOKEN_V2 }}
+          ACCOUNT_ID_V2: ${{ secrets.ACCOUNT_ID_V2 }}
+          ENABLE_GENSHIN: ${{ vars.ENABLE_GENSHIN || 'true' }}
+          ENABLE_STARRAIL: ${{ vars.ENABLE_STARRAIL || 'true' }}
+          ENABLE_ZZZ: ${{ vars.ENABLE_ZZZ || 'true' }}
+          ENABLE_HONKAI3RD: ${{ vars.ENABLE_HONKAI3RD || 'false' }}
+          ENABLE_TOT: ${{ vars.ENABLE_TOT || 'false' }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TIMEZONE: ${{ vars.TIMEZONE || 'Asia/Kuala_Lumpur' }}
+          LOG_TO_FILE: "false"
